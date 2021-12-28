@@ -81,7 +81,13 @@ class App {
 
   constructor() {
     //invoked immediately as soon as the p@ge lods
+    /////get user's position
     this._getPosition();
+
+    //Get data from local storage
+    this._getLocalStorage();
+
+    /////Attach event handlers (applicat of event delegation)
     form.addEventListener("submit", this._newWorkout.bind(this));
     inputType.addEventListener("change", this._toggleElevationField);
     // to focus to the clicked workout on map
@@ -115,6 +121,11 @@ class App {
 
     // this acts as a special eventlistener to respond to click event on map and gives us the latitude and longitude  of the place that we clicked
     this.#map.on("click", this._showForm.bind(this));
+
+    // this due to async nature of map loading, we can only attach markers after only map loads
+    this.#workouts.forEach((work) => {
+      this._renderWorkOutMarker(work);
+    });
   }
 
   _showForm(mapE) {
@@ -193,6 +204,9 @@ class App {
 
     // Hide form and  clear inout fields
     this._hideForm();
+
+    //set local storage to new workout
+    this._setLocalStorage();
   }
 
   _renderWorkOutMarker(workout) {
@@ -281,7 +295,29 @@ class App {
       },
     });
 
-    workout.click();
+    //workout.click(); this will throw error as object coming from local storage will not inherit its prototype property
+  }
+
+  _setLocalStorage() {
+    localStorage.setItem("workouts", JSON.stringify(this.#workouts));
+  }
+
+  _getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem("workouts"));
+
+    // when we convert object to string using jsn and back to object , we lose all the prototype chain of object, it now simply behaves as object and doesnot show any inherited behaviour
+
+    if (!data) return;
+    this.#workouts = data;
+
+    this.#workouts.forEach((work) => {
+      this._renderWorkout(work);
+    });
+  }
+
+  reset() {
+    localStorage.removeItem("workouts");
+    location.reload();
   }
 }
 
